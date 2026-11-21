@@ -19,7 +19,8 @@ export const prerender = false;
       <div><p class="eyebrow">PENGELOLA WEBSITE</p><h1>Buat Postingan</h1><p class="intro">Tulis update baru. Setelah diterbitkan, website akan membangun ulang secara otomatis.</p></div>
       <button id="logout" class="logout" type="button">Keluar</button>
     </div>
-    <form id="post-form">
+    <section id="login-required" class="login-required" hidden><h2>Login diperlukan</h2><p>Silakan login sebagai pengelola untuk membuat postingan.</p><button id="open-login" type="button">Login Pengelola</button></section>
+    <form id="post-form" hidden>
       <label for="title">Judul</label>
       <input id="title" name="title" maxlength="160" placeholder="Contoh: Jalak Suren anakan ready" required />
       <label for="content">Tulisan</label>
@@ -44,6 +45,9 @@ export const prerender = false;
   const status = document.querySelector('#status');
   const publish = document.querySelector('#publish');
   const logout = document.querySelector('#logout');
+  const loginRequired = document.querySelector('#login-required');
+  const openLogin = document.querySelector('#open-login');
+  const topline = document.querySelector('.topline');
   let imageUrl = '';
   let objectUrl = '';
 
@@ -52,10 +56,20 @@ export const prerender = false;
     status.dataset.error = error ? 'true' : 'false';
   };
 
-  fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
+  const checkSession = () => fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
     .then(r => r.json())
-    .then(data => { if (!data.authenticated) location.replace('/'); })
-    .catch(() => location.replace('/'));
+    .then(data => {
+      const authenticated = !!data.authenticated;
+      form.hidden = !authenticated;
+      logout.hidden = !authenticated;
+      loginRequired.hidden = authenticated;
+      topline.querySelector('.intro').textContent = authenticated
+        ? 'Tulis update baru. Setelah diterbitkan, website akan membangun ulang secara otomatis.'
+        : 'Login terlebih dahulu untuk mengelola website.';
+    })
+    .catch(() => { form.hidden = true; loginRequired.hidden = false; });
+  checkSession();
+  openLogin.addEventListener('click', () => document.querySelector('#admin-login-toggle')?.click());
 
   imageInput.addEventListener('change', () => {
     imageUrl = '';
@@ -191,7 +205,7 @@ export const prerender = false;
   .publish { margin-top:.5rem; padding:1rem 1.3rem; background:#159957; color:white; }
   .publish:hover { background:#117b47; }
   .publish:disabled { cursor:wait; opacity:.65; }
-  .logout { padding:.65rem 1rem; background:#e7eee9; color:#355343; }
+  .login-required { padding:1.5rem; border:1px solid #e1e9e3; border-radius:18px; background:white; text-align:center; }\n  .login-required h2 { margin:0 0 .5rem; color:#173d2d; }\n  .login-required p { color:#68776e; }\n  .login-required button { padding:.8rem 1.2rem; border:0; border-radius:999px; background:#159957; color:white; font:inherit; font-weight:750; cursor:pointer; }\n  .logout { padding:.65rem 1rem; background:#e7eee9; color:#355343; }
   .remove { padding:.45rem .8rem; background:#fcebea; color:#a52b2b; font-size:.85rem; }
   #status { min-height:1.4em; margin:.25rem 0 0; color:#247347; font-size:.92rem; }
   #status[data-error=true] { color:#b42318; }
