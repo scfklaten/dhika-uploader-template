@@ -1,0 +1,159 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+export const prerender = false;
+---
+
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Buat Postingan | Dhika Jalak Suren Bali</title>
+</head>
+<body>
+  <Header />
+  <main class="wrap">
+    <div class="topline">
+      <div><p class="eyebrow">PENGELOLA WEBSITE</p><h1>Buat Postingan</h1><p class="intro">Tulis update baru. Setelah diterbitkan, website akan membangun ulang secara otomatis.</p></div>
+      <button id="logout" class="logout" type="button">Keluar</button>
+    </div>
+    <form id="post-form">
+      <label for="title">Judul</label>
+      <input id="title" name="title" maxlength="160" placeholder="Contoh: Jalak Suren anakan ready" required />
+      <label for="content">Tulisan</label>
+      <textarea id="content" name="content" rows="9" maxlength="30000" placeholder="Tulis informasi atau cerita di sini..." required></textarea>
+      <div class="image-head"><label for="image">Foto (opsional)</label><span>JPG, PNG, WebP · maks. 8 MB</span></div>
+      <input id="image" type="file" accept="image/jpeg,image/png,image/webp" />
+      <div id="preview-wrap" hidden><img id="preview" alt="Preview gambar yang dipilih" /><button id="remove-image" type="button" class="remove">Hapus gambar</button></div>
+      <p id="status" role="status" aria-live="polite"></p>
+      <button id="publish" class="publish" type="submit">Terbitkan Artikel</button>
+    </form>
+    <p class="note">Artikel akan muncul setelah proses build dan deploy Cloudflare selesai.</p>
+  </main>
+  <Footer />
+<script is:inline>
+(() => {
+  const form = document.querySelector('#post-form');
+  const title = document.querySelector('#title');
+  const content = document.querySelector('#content');
+  const imageInput = document.querySelector('#image');
+  const previewWrap = document.querySelector('#preview-wrap');
+  const preview = document.querySelector('#preview');
+  const status = document.querySelector('#status');
+  const publish = document.querySelector('#publish');
+  const logout = document.querySelector('#logout');
+  let imageUrl = '';
+  let objectUrl = '';
+
+  const say = (text, error = false) => {
+    status.textContent = text;
+    status.dataset.error = error ? 'true' : 'false';
+  };
+
+  fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
+    .then(r => r.json())
+    .then(data => { if (!data.authenticated) location.replace('/'); })
+    .catch(() => location.replace('/'));
+
+  imageInput.addEventListener('change', () => {
+    imageUrl = '';
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    const file = imageInput.files?.[0];
+    if (!file) { previewWrap.hidden = true; return; }
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024) {
+      imageInput.value = '';
+      previewWrap.hidden = true;
+      say('Pilih JPG, PNG, atau WebP dengan ukuran maksimal 8 MB.', true);
+      return;
+    }
+    objectUrl = URL.createObjectURL(file);
+    preview.src = objectUrl;
+    previewWrap.hidden = false;
+    say('Foto siap. Foto akan diunggah saat artikel diterbitkan.');
+  });
+
+  document.querySelector('#remove-image').addEventListener('click', () => {
+    imageInput.value = '';
+    imageUrl = '';
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    previewWrap.hidden = true;
+    say('Foto dihapus dari postingan.');
+  });
+
+  logout.addEventListener('click', async () => {
+    logout.disabled = true;
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
+    finally { location.href = '/'; }
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!title.value.trim() || !content.value.trim()) return;
+    publish.disabled = true;
+    try {
+      let uploadedImage = '';
+      const file = imageInput.files?.[0];
+      if (file) {
+        say('Mengunggah gambar ke GitHub…');
+        const data = new FormData();
+        data.append('file', file);
+        data.append('filename', title.value);
+        const uploadResponse = await fetch('/api/upload', { method: 'POST', credentials: 'same-origin', body: data });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadResult.error || 'Upload gambar gagal.');
+        uploadedImage = uploadResult.url;
+        imageUrl = uploadedImage;
+      }
+
+      say('Menyimpan artikel ke GitHub…');
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: title.value, content: content.value, image: uploadedImage })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Artikel gagal diterbitkan.');
+      say('Artikel berhasil disimpan. Menunggu build dan deploy Cloudflare…');
+      form.reset();
+      imageUrl = '';
+      previewWrap.hidden = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setTimeout(() => { location.href = result.url; }, 1800);
+    } catch (error) {
+      say(error.message || 'Terjadi kesalahan. Silakan coba lagi.', true);
+      publish.disabled = false;
+    }
+  });
+})();
+</script>
+<style>
+  :global(body) { margin:0; background:#f4f7f5; color:#26352d; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  .wrap { width:min(100% - 2rem,720px); margin:2.5rem auto 4rem; }
+  .topline { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:1.5rem; }
+  .eyebrow { margin:0 0 .4rem; color:#159957; font-size:.75rem; font-weight:800; letter-spacing:.12em; }
+  h1 { margin:0; color:#173d2d; font-size:clamp(1.8rem,5vw,2.4rem); }
+  .intro { margin:.5rem 0 0; color:#68776e; line-height:1.6; }
+  form { display:grid; gap:.7rem; padding:clamp(1.1rem,4vw,2rem); border:1px solid #e1e9e3; border-radius:18px; background:white; box-shadow:0 8px 28px #173d2d0a; }
+  label { margin-top:.35rem; font-weight:750; color:#263b31; }
+  input:not([type=file]), textarea { box-sizing:border-box; width:100%; padding:.9rem 1rem; border:1px solid #cbd8cf; border-radius:10px; background:#fff; color:#26352d; font:inherit; }
+  textarea { resize:vertical; min-height:180px; line-height:1.65; }
+  input:focus, textarea:focus { outline:2px solid #15995755; border-color:#159957; }
+  input[type=file] { width:100%; padding:.65rem; border:1px dashed #b8c9bd; border-radius:10px; background:#f8fbf9; }
+  .image-head { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; }
+  .image-head span,.note { color:#718078; font-size:.85rem; }
+  #preview-wrap { display:grid; justify-items:start; gap:.5rem; margin-top:.3rem; }
+  #preview { display:block; max-width:100%; max-height:340px; border-radius:12px; object-fit:contain; background:#f1f4f2; }
+  .publish,.logout,.remove { border:0; border-radius:999px; cursor:pointer; font:inherit; font-weight:750; }
+  .publish { margin-top:.5rem; padding:1rem 1.3rem; background:#159957; color:white; }
+  .publish:hover { background:#117b47; }
+  .publish:disabled { cursor:wait; opacity:.65; }
+  .logout { padding:.65rem 1rem; background:#e7eee9; color:#355343; }
+  .remove { padding:.45rem .8rem; background:#fcebea; color:#a52b2b; font-size:.85rem; }
+  #status { min-height:1.4em; margin:.25rem 0 0; color:#247347; font-size:.92rem; }
+  #status[data-error=true] { color:#b42318; }
+  .note { text-align:center; line-height:1.6; }
+  @media(max-width:520px) { .wrap { margin:1.5rem auto 3rem; } .topline { align-items:center; } .image-head { align-items:flex-start; flex-direction:column; gap:.15rem; } }
+</style>
