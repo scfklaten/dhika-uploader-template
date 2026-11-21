@@ -45,6 +45,7 @@ export async function POST({ request, locals }: any) {
     "title: " + JSON.stringify(title),
     "description: " + JSON.stringify(description),
     'pubDate: "' + date + '"',
+    'publishedAt: "' + now.toISOString() + '"',
     ...(image ? ["heroImage: " + JSON.stringify(image)] : []),
     "---",
     "",
