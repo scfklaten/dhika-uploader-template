@@ -1,4 +1,4 @@
-import { isAdminRequest, isSameOrigin } from "../../../lib/admin-auth";
+import { isAdminRequest, isSameOrigin } from "../../lib/admin-auth";
 
 export const prerender = false;
 
