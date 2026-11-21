@@ -1,5 +1,5 @@
 ---
-export const prerender = false;
+import Header from "../components/Header.astro";\nexport const prerender = false;
 ---
 <!doctype html>
 <html lang="id">
@@ -33,6 +33,8 @@ export const prerender = false;
   <p class="hint">Saran: gunakan nama file yang singkat dan sesuai isi gambar.</p>
 </section></main>
 <script>
+fetch('/api/auth/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).then(data=>{document.querySelector('#upload-tools').hidden=!data.authenticated;document.querySelector('#upload-login').hidden=!!data.authenticated;}).catch(()=>{document.querySelector('#upload-login').hidden=false;});
+document.querySelector('#upload-login-button').addEventListener('click',()=>document.querySelector('#admin-login-toggle')?.click());
 const fi=document.querySelector('#file'),pv=document.querySelector('#preview'),up=document.querySelector('#upload'),st=document.querySelector('#status'),fn=document.querySelector('#filename'),rs=document.querySelector('#result'),ur=document.querySelector('#url');let selected=null;
 fi.addEventListener('change',()=>{selected=fi.files?.[0]||null;rs.style.display='none';st.textContent='';if(!selected){up.disabled=true;pv.style.display='none';return}if(!['image/jpeg','image/png','image/webp'].includes(selected.type)){st.textContent='Format harus JPG, PNG, atau WebP.';selected=null;up.disabled=true;return}if(selected.size>8*1024*1024){st.textContent='Ukuran gambar maksimal 8 MB.';selected=null;up.disabled=true;pv.style.display='none';return}pv.src=URL.createObjectURL(selected);pv.style.display='block';up.disabled=false;if(!fn.value)fn.value=selected.name.replace(/\.[^.]+$/,'').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase()});
 up.addEventListener('click',async()=>{if(!selected)return;up.disabled=true;st.textContent='Mengunggah gambar…';try{const fd=new FormData();fd.append('file',selected);fd.append('filename',fn.value);const res=await fetch('/api/upload',{method:'POST',body:fd});const data=await res.json();if(!res.ok)throw new Error(data.error||'Upload gagal.');ur.href=data.url;ur.textContent=data.url;rs.style.display='block';st.textContent='Selesai. Salin URL untuk digunakan di artikel.'}catch(e){st.textContent=e.message||'Terjadi kesalahan.'}finally{up.disabled=false}});
