@@ -8,7 +8,7 @@ import FormattedDate from '../../components/FormattedDate.astro';
 
 const getPublishedTime = (post: any) => {
 	if (post.data.publishedAt) return post.data.publishedAt.valueOf();
-	const match = post.id.match(/-(\\d{14})$/);
+	const match = post.id.match(/-(\d{14})$/);
 	if (match) {
 		const stamp = match[1];
 		return Date.UTC(
