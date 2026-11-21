@@ -138,11 +138,16 @@ export const prerender = false;
 
         await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 3000 : 5000));
         try {
-          const check = await fetch(articleUrl, { method: 'HEAD', cache: 'no-store' });
+          const check = await fetch(articleUrl, { method: 'GET', cache: 'no-store' });
           if (check.ok) {
-            say('Berhasil! Artikel sudah tayang. Membuka artikel…');
-            location.replace(articleUrl);
-            return;
+            const html = await check.text();
+            const page = new DOMParser().parseFromString(html, 'text/html');
+            const visibleTitle = page.querySelector('article h1')?.textContent?.trim() || '';
+            if (visibleTitle === title.value.trim()) {
+              say('Berhasil! Artikel sudah tayang. Membuka artikel…');
+              location.replace(articleUrl);
+              return;
+            }
           }
         } catch (_) {
           // Jaringan sementara gagal; lanjutkan pemeriksaan selama batas waktu.
