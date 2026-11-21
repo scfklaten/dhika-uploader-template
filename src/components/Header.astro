@@ -11,7 +11,7 @@ import { SITE_TITLE } from '../consts';
 			<HeaderLink href="/burung">Update</HeaderLink>
 			<HeaderLink href="/info">Info</HeaderLink>
 		</div>
-		<div class="social-links" aria-label="Media sosial">
+		<div class="social-links" aria-label="Media sosial dan akses pengelola">
 			<a href="https://www.facebook.com/jalak.suren.bali" target="_blank" rel="noopener noreferrer" aria-label="Facebook Dhika Jalak Suren Bali">
 				<svg viewBox="0 0 24 24" aria-hidden="true" width="28" height="28"><path fill="currentColor" d="M13.5 21v-8.2h2.8l.4-3.2h-3.2V7.5c0-.9.3-1.6 1.6-1.6h1.7V3.1c-.3 0-1.4-.1-2.6-.1-2.6 0-4.4 1.6-4.4 4.5v2.1H7v3.2h2.8V21h3.7Z"/></svg>
 			</a>
@@ -21,6 +21,9 @@ import { SITE_TITLE } from '../consts';
 			<a href="https://www.instagram.com/ud.dhikajalaksuren/" target="_blank" rel="noopener noreferrer" aria-label="Instagram UD Dhika Jalak Suren">
 				<svg viewBox="0 0 24 24" aria-hidden="true" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="6.5" r="1.2" fill="currentColor"/></svg>
 			</a>
+			<button class="admin-login" type="button" aria-label="Login pengelola, segera tersedia" title="Login pengelola — segera tersedia" disabled>
+				<svg viewBox="0 0 24 24" aria-hidden="true" width="23" height="23"><rect x="4.5" y="10" width="15" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg>
+			</button>
 		</div>
 	</nav>
 </header>
@@ -53,6 +56,22 @@ import { SITE_TITLE } from '../consts';
 	.social-links { align-items: center; gap: 0.35em; }
 	.social-links a { padding: 0.5em; }
 	.social-links a:hover { color: #ffc107; }
+	.admin-login {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		margin-left: 0.15em;
+		padding: 0;
+		border: 1px solid rgba(255,255,255,.42);
+		border-radius: 50%;
+		background: rgba(255,255,255,.10);
+		color: #fff;
+		cursor: not-allowed;
+		opacity: .82;
+	}
+	.admin-login:disabled { opacity: .82; }
 
 	@media (max-width: 720px) {
 		nav {
@@ -81,6 +100,11 @@ import { SITE_TITLE } from '../consts';
 		}
 		.social-links a {
 			padding: 1em 0.35em;
+		}
+		.admin-login {
+			width: 38px;
+			height: 38px;
+			margin-left: 0.1em;
 		}
 	}
 </style>
