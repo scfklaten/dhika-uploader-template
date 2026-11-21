@@ -6,11 +6,22 @@ import FormattedDate from '../components/FormattedDate.astro';
 import { SITE_TITLE } from '../consts';
 import { getCollection } from 'astro:content';
 
-const posts = (await getCollection('blog')).sort((a, b) => {
-	const dateOrder = b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
-	// Jika tanggal sama, slug artikel baru memiliki timestamp lebih besar.
-	return dateOrder || b.id.localeCompare(a.id);
-});
+const getPublishedTime = (post: any) => {
+	if (post.data.publishedAt) return post.data.publishedAt.valueOf();
+	const match = post.id.match(/-(\\d{14})$/);
+	if (match) {
+		const stamp = match[1];
+		return Date.UTC(
+			Number(stamp.slice(0, 4)), Number(stamp.slice(4, 6)) - 1,
+			Number(stamp.slice(6, 8)), Number(stamp.slice(8, 10)),
+			Number(stamp.slice(10, 12)), Number(stamp.slice(12, 14))
+		);
+	}
+	return post.data.pubDate.valueOf();
+};
+const posts = (await getCollection('blog')).sort(
+	(a, b) => getPublishedTime(b) - getPublishedTime(a)
+);
 const latestPosts = posts.slice(0, 3);
 const title = SITE_TITLE;
 const description = 'Koleksi dan update Jalak Suren dari Dhika Jalak Suren Bali. Lihat informasi burung terbaru dan hubungi kami untuk ketersediaan.';
