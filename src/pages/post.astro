@@ -116,12 +116,48 @@ export const prerender = false;
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Artikel gagal diterbitkan.');
-      say('Artikel berhasil disimpan. Menunggu build dan deploy Cloudflare…');
+      say('Artikel tersimpan di GitHub. Memulai proses build dan deploy website…');
       form.reset();
       imageUrl = '';
       previewWrap.hidden = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
-      setTimeout(() => { location.href = result.url; }, 1800);
+
+      publish.textContent = 'Menunggu website tayang…';
+      const articleUrl = new URL(result.url, location.origin).href;
+      const startedAt = Date.now();
+      let attempt = 0;
+
+      // Artikel baru akan mengembalikan 404 sampai build dan deploy Cloudflare selesai.
+      while (Date.now() - startedAt < 180000) {
+        attempt += 1;
+        const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+        if (attempt === 1) say('Artikel tersimpan. Cloudflare sedang membangun website…');
+        else if (elapsed < 30) say('Sedang membangun website… mohon tunggu.');
+        else if (elapsed < 90) say('Build masih berjalan. Tulisan Anda aman, tidak perlu mengirim ulang.');
+        else say('Hampir selesai. Kami sedang memeriksa apakah artikel sudah tayang.');
+
+        await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 3000 : 5000));
+        try {
+          const check = await fetch(articleUrl, { method: 'HEAD', cache: 'no-store' });
+          if (check.ok) {
+            say('Berhasil! Artikel sudah tayang. Membuka artikel…');
+            location.replace(articleUrl);
+            return;
+          }
+        } catch (_) {
+          // Jaringan sementara gagal; lanjutkan pemeriksaan selama batas waktu.
+        }
+      }
+
+      say('Artikel sudah tersimpan, tetapi proses deploy belum terdeteksi selesai. Jangan kirim ulang. Buka link artikel untuk memeriksa kembali:');
+      const link = document.createElement('a');
+      link.href = articleUrl;
+      link.textContent = 'Buka artikel';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      status.append(' ', link);
+      publish.textContent = 'Artikel sedang diproses';
+      publish.disabled = true;
     } catch (error) {
       say(error.message || 'Terjadi kesalahan. Silakan coba lagi.', true);
       publish.disabled = false;
