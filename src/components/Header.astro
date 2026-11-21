@@ -85,7 +85,7 @@ import { SITE_TITLE } from '../consts';
       if (!response.ok) throw new Error(data.error || 'Login gagal.');
       showAdmin(true);
       dialog.close();
-      window.location.href = '/post/';
+      window.location.href = ['/post/', '/upload/'].includes(location.pathname) ? location.pathname : '/post/';
     } catch (error) {
       message.textContent = error.message || 'Tidak dapat login.';
     } finally {
