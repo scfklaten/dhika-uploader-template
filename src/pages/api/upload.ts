@@ -1,3 +1,5 @@
+import { isAdminRequest, isSameOrigin } from "../../lib/admin-auth";
+
 export const prerender = false;
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -38,6 +40,9 @@ function toBase64(bytes: Uint8Array) {
 export async function POST({ request, locals }: any) {
   const runtime = locals.runtime;
   const env = runtime?.env ?? {};
+  if (!isSameOrigin(request) || !(await isAdminRequest(request, env.ADMIN_PASSWORD))) {
+    return json({ error: "Silakan login sebagai pengelola terlebih dahulu." }, 401);
+  }
   if (!env.GITHUB_TOKEN || !env.GITHUB_OWNER || !env.GITHUB_REPO) {
     return json({ error: "Uploader belum dikonfigurasi oleh administrator." }, 503);
   }
